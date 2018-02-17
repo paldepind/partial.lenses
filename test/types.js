@@ -66,6 +66,8 @@ export const Constant = T_functor
 
 export const Identity = T_monad
 
+export const IdentityAsync = T_monad
+
 export const toFunction = T.fn(
   [T_optic],
   T_opticFnOf(T.or(T_applicative, T_functor))
@@ -80,6 +82,14 @@ export const assign = T.fn(
 export const modify = T.fn(
   [T_optic, T.fn([T_maybeDataO, T_index], T_maybeDataI), T_maybeDataI],
   T_maybeDataO
+)
+export const modifyAsync = T.fn(
+  [
+    T_optic,
+    T.fn([T_maybeDataO, T_index], T.maybeThenable(T_maybeDataI)),
+    T_maybeDataI
+  ],
+  T.thenable(T_maybeDataO)
 )
 export const remove = T.fn([T_optic, T_maybeDataI], T_maybeDataO)
 export const set = T.fn([T_optic, T_maybeDataI, T_maybeDataI], T_maybeDataO)

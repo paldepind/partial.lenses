@@ -8,6 +8,12 @@ import * as T from './types'
 
 //
 
+const later = I.curry(
+  (ms, v) => new Promise(resolve => setTimeout(() => resolve(v), ms))
+)
+
+//
+
 const id = I.id
 const X = L
 
@@ -124,6 +130,7 @@ const run = expr =>
     everywhere,
     flatten,
     id,
+    later,
     offBy1,
     X
   )
@@ -139,14 +146,14 @@ function toggleEnv() {
 
 function testEq(exprIn, expect) {
   const expr = exprIn.replace(/[ \n]+/g, ' ')
-  it(`${expr} => ${show(expect)}`, () => {
-    const actual = run(expr)
+  it(`${expr} => ${show(expect)}`, async () => {
+    const actual = await run(expr)
     if (!equals(actual, expect))
       throw Error(`Expected: ${show(expect)}, actual: ${show(actual)}`)
 
     toggleEnv()
     try {
-      const actual = run(expr)
+      const actual = await run(expr)
       if (!equals(actual, expect))
         throw Error(`Expected: ${show(expect)}, actual: ${show(actual)}`)
     } finally {
@@ -154,7 +161,7 @@ function testEq(exprIn, expect) {
     }
 
     const exprTy = expr.replace(/\bL\.([a-zA-Z0-9]*)/g, 'T.$1(L.$1)')
-    const typed = run(exprTy)
+    const typed = await run(exprTy)
     if (!equals(actual, typed))
       throw Error(`Typed: ${show(typed)}, actual: ${show(actual)}`)
   })
@@ -199,6 +206,7 @@ describe('arities', () => {
   const arities = {
     Constant: undefined,
     Identity: undefined,
+    IdentityAsync: undefined,
     all: 3,
     and: 2,
     any: 3,
@@ -271,6 +279,7 @@ describe('arities', () => {
     minimum: 2,
     minimumBy: 3,
     modify: 3,
+    modifyAsync: 3,
     modifyOp: 1,
     none: 3,
     normalize: 1,
@@ -1740,6 +1749,10 @@ describe('L.flat', () => {
     )`,
     [{a: [[{b: {c: -1}}], [{b: [{c: -2}]}]]}, {a: {b: {c: [[[-3]]]}}}]
   )
+})
+
+describe('L.modifyAsync', () => {
+  testEq(`L.modifyAsync(L.elems, x => later(10, -x), [3, 1, 4])`, [-3, -1, -4])
 })
 
 if (process.env.NODE_ENV !== 'production') {

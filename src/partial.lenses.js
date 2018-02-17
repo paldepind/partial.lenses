@@ -4,6 +4,15 @@ import * as C from './contract'
 
 //
 
+const P = Promise
+
+const returnAsync = P.resolve.bind(P)
+
+const chainAsync = (xyP, xP) =>
+  null != xP && I.isFunction(xP.then) ? xP.then(xyP) : xyP(xP)
+
+//
+
 const toStringPartial = x => (void 0 !== x ? String(x) : '')
 
 const sliceIndex = (m, l, d, i) =>
@@ -745,6 +754,15 @@ export const Identity = (process.env.NODE_ENV === 'production'
   chain: I.applyU
 })
 
+export const IdentityAsync = (process.env.NODE_ENV === 'production'
+  ? I.id
+  : I.freeze)({
+  map: chainAsync,
+  ap: (xyP, xP) => chainAsync(xP => chainAsync(xyP => xyP(xP), xyP), xP),
+  of: I.id,
+  chain: chainAsync
+})
+
 export const Constant = (process.env.NODE_ENV === 'production'
   ? I.id
   : I.freeze)({
@@ -771,6 +789,10 @@ export const toFunction = (process.env.NODE_ENV === 'production'
 export const assign = I.curry((o, x, s) => setU([o, propsOf(x)], x, s))
 
 export const modify = I.curry(modifyU)
+
+export const modifyAsync = I.curry((o, f, s) =>
+  returnAsync(toFunction(o)(s, void 0, IdentityAsync, f))
+)
 
 export const remove = I.curry((o, s) => setU(o, void 0, s))
 
